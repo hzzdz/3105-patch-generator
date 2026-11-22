@@ -18,7 +18,7 @@
  * ========================================================= */
 
 const bundles = {
-    A: "com.garena.ffvn",
+    A: "com.hzz.game",
     B: "com.example.second",
     C: "group.com.example.shared"
 };
