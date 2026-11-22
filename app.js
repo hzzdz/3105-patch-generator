@@ -333,7 +333,7 @@
         t.className = "toast " + type;
         t.setAttribute("role", type === "error" ? "alert" : "status");
         t.innerHTML = svgUse(icon) + "<span></span>";
-        t.querySelector("span").textContent = message;
+        t.querySelector("span").textContent = t.title = message;
         els.toasts.appendChild(t);
         while (els.toasts.children.length > 3) els.toasts.firstElementChild.remove();
         const leave = () => {
