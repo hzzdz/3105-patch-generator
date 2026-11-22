@@ -101,7 +101,7 @@ const generatedKey = await webcrypto.subtle.importKey("raw", generatedEnvelope.p
 const generatedPayloadBytes = await webcrypto.subtle.decrypt({ name:"AES-GCM", iv:generatedEnvelope.encryptedPayload.slice(0,12), additionalData:enc.encode(`3105PATCH/v3/payload/${generatedEnvelope.packageID}`), tagLength:128 }, generatedKey, generatedEnvelope.encryptedPayload.slice(12));
 const generatedPayload = parseBplist(new Uint8Array(generatedPayloadBytes));
 assert.equal(generatedPayload.project.name,"SmokePatch");
-assert.equal(generatedPayload.project.rules[0].relativePath,"Documents/gameassetbundles");
+assert.equal(generatedPayload.project.rules[0].relativePath,"Documents/gameassetbundles/fixed-name.bin");
 assert.equal(generatedPayload.project.rules[0].replacementFilename,"fixed-name.bin");
 assert.deepEqual([...generatedPayload.project.rules[0].replacementData],[...fileBytes]);
 assert.equal(hex(new Uint8Array(await webcrypto.subtle.digest("SHA-256",generatedEnvelope.publicContentKey))),hex(generatedEnvelope.keyFingerprint));
@@ -111,6 +111,6 @@ const directoryEnvelope = parseBplist(directoryBytes.slice(magic.length));
 const directoryKey = await webcrypto.subtle.importKey("raw",directoryEnvelope.publicContentKey,{name:"AES-GCM"},false,["decrypt"]);
 const directoryPlain = await webcrypto.subtle.decrypt({name:"AES-GCM",iv:directoryEnvelope.encryptedPayload.slice(0,12),additionalData:enc.encode(`3105PATCH/v3/payload/${directoryEnvelope.packageID}`),tagLength:128},directoryKey,directoryEnvelope.encryptedPayload.slice(12));
 const directoryPayload = parseBplist(new Uint8Array(directoryPlain));
-assert.equal(directoryPayload.project.rules[0].relativePath,"Documents/gameassetbundles");
+assert.equal(directoryPayload.project.rules[0].relativePath,"Documents/gameassetbundles/uploaded-name.bin");
 assert.equal(directoryPayload.project.rules[0].replacementFilename,"uploaded-name.bin");
 console.log(".3105 schema-v3 smoke test passed (file and folder Link mapping, header, plist, encryption, digest, binary payload).");

@@ -94,10 +94,10 @@ async function buildPatch({ bundleKey, linkKey, patchName, file, onProgress }) {
 
     const isDirectory = relPath.endsWith("/");
     const linkTarget = relPath.replace(/\/$/, "");
-    const slash = linkTarget.lastIndexOf("/");
-    const relativePath = isDirectory ? linkTarget : linkTarget.slice(0, slash);
-    const replacementFilename = isDirectory ? file.name : linkTarget.slice(slash + 1);
-    if (!relativePath) throw new Error("Link must include a folder path before the target filename.");
+    // In 3105, PatchRule.relativePath is the full path of the file being replaced
+    // (container root → file, including its name), not its parent folder.
+    const relativePath = isDirectory ? `${linkTarget}/${file.name}` : linkTarget;
+    const replacementFilename = relativePath.slice(relativePath.lastIndexOf("/") + 1);
     if (new TextEncoder().encode(replacementFilename).length > 255) throw new Error("Target filename is too long (maximum 255 UTF-8 bytes).");
     if (new TextEncoder().encode(relativePath).length > 4096) throw new Error("Link path is too long (maximum 4096 UTF-8 bytes).");
 
