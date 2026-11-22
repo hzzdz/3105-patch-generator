@@ -399,10 +399,11 @@ button { font: inherit; color: inherit; }
 
 .icon-btn {
     width: 38px; height: 38px; flex: none; display: grid; place-items: center; cursor: pointer;
+    padding: 0; margin: 0; -webkit-appearance: none; appearance: none; line-height: 0;
     color: var(--text-2); background: rgba(255,255,255,.03); border: 1px solid var(--line-2); border-radius: var(--r-md);
     transition: all var(--t-fast) var(--ease);
 }
-.icon-btn svg { width: 17px; height: 17px; }
+.icon-btn svg { width: 17px; height: 17px; display: block; }
 .icon-btn.danger:hover { color: var(--danger); background: rgba(251,113,133,.1); border-color: rgba(251,113,133,.45); }
 .icon-btn:disabled { opacity: .4; cursor: not-allowed; }
 
