@@ -302,8 +302,8 @@
         });
 
         let cls = "", text;
-        if (state.busy) { cls = "busy"; text = "Building workspace ZIP…"; }
-        else if (state.generated) { cls = "done"; text = "Workspace ZIP ready to download"; }
+        if (state.busy) { cls = "busy"; text = "Creating .3105 package…"; }
+        else if (state.generated) { cls = "done"; text = ".3105 package ready to download"; }
         else if (state.reading) { cls = "busy"; text = "Uploading file…"; }
         else if (count === 4) { cls = "ready"; text = "Ready to generate"; }
         else { const left = 4 - count; text = `Waiting for input · ${left} step${left > 1 ? "s" : ""} left`; }
@@ -370,7 +370,7 @@
         els.generateBtn.classList.remove("armed");
         els.generateBtn.classList.add("loading");
         els.generateBtn.setAttribute("aria-busy", "true");
-        els.generateLabel.textContent = "BUILDING WORKSPACE ZIP...";
+        els.generateLabel.textContent = "CREATING .3105 PATCH...";
         els.progressWrap.hidden = false;
         setProgress(0, "Processing…");
         update();
@@ -394,25 +394,23 @@
             const set = (el, v) => { el.textContent = v; el.title = v; };
             set(els.resName, patchName);
             set(els.resOut, filename);
-            // Format status comes from the exporter module — never claim compatibility unless it says verified.
             const badge = $("resBadge");
-            badge.textContent = verified ? "VERIFIED" : "UNVERIFIED";
+            badge.textContent = verified ? "APP VERIFIED" : "SCHEMA V3";
             badge.classList.toggle("warn", !verified);
             $("resNote").classList.toggle("warn", !verified);
             $("resNoteText").textContent = verified
                 ? `Format: ${format}.`
-                : `Unverified format: ${format}, saved with the "${filename.slice(filename.lastIndexOf("."))}" extension. ` +
-                  `It has not been confirmed that 3105 accepts this file.`;
+                : `Encoded with the public 3105 schema v3 codec (${format}). Import on your installed app version has not been confirmed.`;
             clearTimeout(dlTimer);
             els.downloadBtn.classList.remove("started");
-            els.downloadLabel.textContent = "DOWNLOAD WORKSPACE ZIP";
+            els.downloadLabel.textContent = "DOWNLOAD .3105 PATCH";
             set(els.resFile, state.file.name);
             set(els.resSize, formatSize(blob.size));
             set(els.resBundle, "Bundle " + state.bundle);
             set(els.resLink, "Link " + state.link);
             state.generated = true;
             els.result.hidden = false;
-            toast(verified ? "Workspace ZIP created" : "Workspace ZIP created — 3105 import unverified", "success");
+            toast(verified ? "3105 patch created" : ".3105 patch created — test import in your app", "success");
             fitSide();
             const r = els.result.getBoundingClientRect();
             if (r.bottom > window.innerHeight || r.top < 0) {
@@ -421,13 +419,13 @@
             els.result.focus({ preventScroll: true });
         } catch (err) {
             console.error(err);
-            const msg = "Failed to build workspace ZIP: " + (err && err.message ? err.message : err);
-            showError(msg); toast("Workspace ZIP creation failed", "error");
+            const msg = "Failed to create .3105 patch: " + (err && err.message ? err.message : err);
+            showError(msg); toast(".3105 patch creation failed", "error");
         } finally {
             state.busy = false;
             els.generateBtn.classList.remove("loading");
             els.generateBtn.removeAttribute("aria-busy");
-            els.generateLabel.textContent = "BUILD WORKSPACE ZIP";
+            els.generateLabel.textContent = "CREATE .3105 PATCH";
             setTimeout(() => { els.progressWrap.hidden = true; }, 600);
             update();
         }
@@ -445,7 +443,7 @@
         els.downloadLabel.textContent = "DOWNLOAD STARTED";
         dlTimer = setTimeout(() => {
             els.downloadBtn.classList.remove("started");
-            els.downloadLabel.textContent = "DOWNLOAD WORKSPACE ZIP";
+            els.downloadLabel.textContent = "DOWNLOAD .3105 PATCH";
         }, 1800);
     });
 

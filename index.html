@@ -155,7 +155,7 @@
                 <button type="submit" id="generateBtn" class="btn btn-primary btn-xl" disabled>
                     <span class="spinner" aria-hidden="true"></span>
                     <svg class="btn-icon"><use href="#i-bolt"/></svg>
-                <span id="generateLabel">BUILD WORKSPACE ZIP</span>
+                <span id="generateLabel">CREATE .3105 PATCH</span>
                 </button>
 
                 <div id="progressWrap" class="progress-wrap" hidden>
@@ -203,8 +203,8 @@
                             <span class="burst"><i style="--a:0deg"></i><i style="--a:45deg"></i><i style="--a:90deg"></i><i style="--a:135deg"></i><i style="--a:180deg"></i><i style="--a:225deg"></i><i style="--a:270deg"></i><i style="--a:315deg"></i></span>
                             <svg viewBox="0 0 52 52"><circle class="s-circle" cx="26" cy="26" r="23"/><path class="s-check" d="m15 27 7.5 7.5L37 19.5"/></svg>
                         </div>
-                        <h2 class="result-title" id="resultTitle">WORKSPACE ZIP READY</h2>
-                    <p class="result-sub">This is not a .3105 package. Extract the patch into 3105's Patches workspace, sync it in the app, then use Export to create the .3105 file.</p>
+                        <h2 class="result-title" id="resultTitle">.3105 PATCH READY</h2>
+                    <p class="result-sub">Created with the public 3105 schema v3 codec. Import compatibility has not yet been confirmed on your app version.</p>
                     </div>
 
                     <div class="result-body">
@@ -231,7 +231,7 @@
                                 <svg class="btn-icon dl-icon"><use href="#i-download"/></svg>
                                 <svg class="btn-icon dl-done"><use href="#i-check"/></svg>
                             </span>
-                            <span id="downloadLabel">DOWNLOAD WORKSPACE ZIP</span>
+                            <span id="downloadLabel">DOWNLOAD .3105 PATCH</span>
                         </a>
                         <button type="button" id="resetBtn" class="btn btn-ghost">
                             <svg class="btn-icon"><use href="#i-refresh"/></svg>
@@ -246,6 +246,10 @@
             <span>© 3105 Patch Generator</span>
             <span class="foot-sep"></span>
             <span>Files are processed locally in your browser</span>
+            <span class="foot-sep"></span>
+            <span>Contains code from the 3105 project</span>
+            <span class="foot-sep"></span>
+            <a href="LICENSE" target="_blank" rel="noopener">GPL-3.0 · No warranty</a>
         </footer>
     </main>
 

@@ -13,7 +13,7 @@
  *              Ví dụ: "Library/Preferences/app.plist" → …/Library/Preferences/app.plist
  *          Không dùng đường dẫn tuyệt đối, "..", hay UUID của container.
  *
- * File tải về luôn là ZIP workspace (<tên patch>.zip), không phải gói .3105.
+ * File tải về là package .3105 schema v3; codec chạy hoàn toàn trong trình duyệt.
  *
  * Giao diện chỉ hiển thị "Bundle A / Link A ...", không hiển thị các giá trị bên dưới.
  * Lưu ý: file này được tải về trình duyệt, nên ai mở mã nguồn trang vẫn đọc được.

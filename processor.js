@@ -8,11 +8,10 @@
  *      <PatchName>/AppGroup/group.<name>/<Link>
  *    Link without a trailing slash is the complete target file path. A Link
  *    ending in "/" is a target folder; the uploaded filename is appended.
- * 2. buildPatch: đọc file, giao cho exporter (exporter.js) đóng gói,
- *    đặt tên file tải về = <tên patch> + settings.outputExtension.
+ * 2. buildPatch: ánh xạ file tải lên thành PatchProject theo model chính thức
+ *    rồi mã hoá thành gói .3105 schema v3.
  *
- * Định dạng đóng gói do exporter quyết định; xem exporter.js để biết
- * định dạng hiện tại và trạng thái xác minh của nó.
+ * Luồng mã hoá nằm trong exporter.js; file không rời khỏi trình duyệt.
  * ========================================================= */
 
 const PatchSpec = (() => {
@@ -36,8 +35,7 @@ const PatchSpec = (() => {
         if (id !== id.trim()) return "has leading or trailing spaces";
         if (id.length > 255) return "is too long";
         if (/[\/\\]/.test(id)) return "must not contain slashes";
-        if (!ID_RE.test(id)) return "is not a valid identifier";
-        if (id.startsWith("group.") && !/^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*$/.test(id.slice(6))) return "is not a valid App Group identifier";
+        if (!ID_RE.test(id) || id.split(".").some(part => !/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/.test(part))) return "is not a valid identifier";
         return null;
     }
 
@@ -88,33 +86,53 @@ async function buildPatch({ bundleKey, linkKey, patchName, file, onProgress }) {
     const exporter = window.PatchExporter;
     if (!exporter || typeof exporter.export !== "function") throw new Error("No exporter module loaded.");
 
-    const p = PatchSpec.plan({
-        bundleKey, linkKey,
-        bundleId: bundles[bundleKey], relPath: links[linkKey],
-        patchName, fileName: file.name
-    });
-    if (p.error) throw new Error(p.error);
+    const bundleId = bundles[bundleKey];
+    const relPath = links[linkKey];
+    const plan = PatchSpec.plan({ bundleKey, linkKey, bundleId, relPath, patchName, fileName: file.name });
+    if (plan.error) throw new Error(plan.error);
+    if (new TextEncoder().encode(patchName).length > 120) throw new Error("Patch name is too long (maximum 120 UTF-8 bytes).");
+
+    const isDirectory = relPath.endsWith("/");
+    const linkTarget = relPath.replace(/\/$/, "");
+    const slash = linkTarget.lastIndexOf("/");
+    const relativePath = isDirectory ? linkTarget : linkTarget.slice(0, slash);
+    const replacementFilename = isDirectory ? file.name : linkTarget.slice(slash + 1);
+    if (!relativePath) throw new Error("Link must include a folder path before the target filename.");
+    if (new TextEncoder().encode(replacementFilename).length > 255) throw new Error("Target filename is too long (maximum 255 UTF-8 bytes).");
+    if (new TextEncoder().encode(relativePath).length > 4096) throw new Error("Link path is too long (maximum 4096 UTF-8 bytes).");
 
     onProgress && onProgress(5, "Reading file…");
     const data = new Uint8Array(await file.arrayBuffer());
 
-    onProgress && onProgress(35, "Packaging…");
-    const workspace = [
-        { path: `${patchName}/`, data: new Uint8Array(0) },
-        { path: `${patchName}/settings.json`, data: new TextEncoder().encode('{\n  "schemaVersion": 1,\n  "fields": []\n}\n') },
-        { path: `${patchName}/Application/`, data: new Uint8Array(0) },
-        { path: `${patchName}/AppGroup/`, data: new Uint8Array(0) },
-        { path: p.entryPath, data }
-    ];
+    onProgress && onProgress(45, "Creating secure .3105 package…");
+    const id = crypto.randomUUID().toUpperCase();
+    const now = new Date();
+    const project = {
+        id,
+        name: patchName,
+        author: "",
+        isPrivate: false,
+        createdAt: { __plistDate: now },
+        updatedAt: { __plistDate: now },
+        bundleIdentifiers: [bundleId],
+        directories: [],
+        rules: [{
+            id: crypto.randomUUID().toUpperCase(),
+            bundleID: bundleId,
+            relativePath,
+            replacementFilename,
+            replacementData: data
+        }]
+    };
     const blob = await exporter.export({
-        entries: workspace,
-        onProgress: q => onProgress && onProgress(35 + Math.round(q * 60), "Packaging…")
+        project,
+        onProgress: q => onProgress && onProgress(45 + Math.round(q * 50), "Encrypting .3105 package…")
     });
 
     onProgress && onProgress(100, "Done");
     return {
         blob,
-        filename: patchName + ".zip",
+        filename: patchName + ".3105",
         verified: exporter.verified === true,
         format: exporter.description || exporter.id
     };

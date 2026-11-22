@@ -1,122 +1,95 @@
-/* =========================================================
- * EXPORTER — module đóng gói đầu ra (có thể thay thế)
- *
- * Muốn đổi định dạng đầu ra: viết một exporter mới với CÙNG giao diện
- * dưới đây rồi gán vào window.PatchExporter (hoặc thay file này).
- *
- *   window.PatchExporter = {
- *     id:          string   // mã định danh exporter
- *     description: string   // mô tả ngắn, hiển thị trên success card
- *     verified:    boolean  // true CHỈ KHI định dạng đã được xác minh là
- *                           // ứng dụng đích thực sự nhận. Giao diện dựa vào
- *                           // cờ này để báo "Verified" / "Unverified".
- *     async export({ entries, onProgress }) → Blob
- *       entries:    [{ path: string, data: Uint8Array }]
- *       onProgress: (fraction 0..1) => void
- *   }
- *
- * Tên file tải về và extension KHÔNG do exporter quyết định.
- * processor.js ghép <tên patch> + settings.outputExtension (config.js).
- *
- * ---------------------------------------------------------
- * Exporter hiện tại: "workspace-zip" — ZIP workspace, không phải gói .3105.
- *   • Container: ZIP chuẩn (phương thức store, không nén, tên file UTF-8).
- *   • Nội dung: <Patch>/settings.json, hai thư mục ánh xạ Application/
- *     và AppGroup/, cùng file payload theo cấu trúc tài liệu công khai.
- *   • Đây KHÔNG phải định dạng gói .3105: theo tài liệu, gói .3105 là một
- *     "envelope" được mã hoá, nhưng đặc tả của nó không được công bố.
- *     Đổi extension không làm file này trở thành gói hợp lệ.
- * ========================================================= */
-
+/*
+ * 3105 package exporter, adapted from the official GPL-3.0 PatchPackageCodec.
+ * See LICENSE and THIRD_PARTY_NOTICES.md. This browser implementation creates
+ * public (not password-protected) schema-v3 packages using Web Crypto.
+ */
 window.PatchExporter = (() => {
-    /* ---------- ZIP writer tối giản (store, không nén, không phụ thuộc thư viện) ---------- */
-    const table = new Uint32Array(256);
-    for (let i = 0; i < 256; i++) {
-        let c = i;
-        for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-        table[i] = c >>> 0;
-    }
-
-    async function crc32(data, onProgress) {
-        let crc = 0xffffffff;
-        const CHUNK = 4 * 1024 * 1024;
-        for (let off = 0; off < data.length; off += CHUNK) {
-            const end = Math.min(off + CHUNK, data.length);
-            for (let i = off; i < end; i++) crc = table[(crc ^ data[i]) & 0xff] ^ (crc >>> 8);
-            if (onProgress) onProgress(end / data.length);
-            await new Promise(r => setTimeout(r, 0)); // nhường UI
-        }
-        return (crc ^ 0xffffffff) >>> 0;
-    }
-
-    function dosDateTime(d) {
-        const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
-        const date = ((Math.max(1980, Math.min(2107, d.getFullYear())) - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
-        return { time, date };
-    }
-
-    async function zip(entries, onProgress) {
-        if (!Array.isArray(entries) || entries.length === 0 || entries.length > 0xffff) throw new Error("Invalid workspace entry count.");
-        const enc = new TextEncoder();
-        const { time, date } = dosDateTime(new Date());
-        const parts = [], central = [];
+    const MAGIC = new TextEncoder().encode("3105PATCH\0");
+    const utf8 = new TextEncoder();
+    const concat = (...parts) => {
+        const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
         let offset = 0;
-        const total = entries.reduce((s, e) => s + e.data.length, 0) || 1;
-        let done = 0;
+        for (const part of parts) { out.set(part, offset); offset += part.length; }
+        return out;
+    };
+    const hex = bytes => [...bytes].map(x => x.toString(16).padStart(2, "0")).join("");
+    const uuid = () => crypto.randomUUID().toUpperCase();
+    const asBytes = value => value instanceof Uint8Array ? value : new Uint8Array(value);
 
-        for (const e of entries) {
-            const name = enc.encode(e.path);
-            const crc = await crc32(e.data, p => onProgress && onProgress((done + p * e.data.length) / total));
-            done += e.data.length;
-            const size = e.data.length;
-
-            const lh = new DataView(new ArrayBuffer(30));
-            lh.setUint32(0, 0x04034b50, true);
-            lh.setUint16(4, 20, true);
-            lh.setUint16(6, 0x0800, true); // UTF-8 names
-            lh.setUint16(8, 0, true);      // store
-            lh.setUint16(10, time, true);
-            lh.setUint16(12, date, true);
-            lh.setUint32(14, crc, true);
-            lh.setUint32(18, size, true);
-            lh.setUint32(22, size, true);
-            lh.setUint16(26, name.length, true);
-            lh.setUint16(28, 0, true);
-            parts.push(lh.buffer, name, e.data);
-
-            const ch = new DataView(new ArrayBuffer(46));
-            ch.setUint32(0, 0x02014b50, true);
-            ch.setUint16(4, 20, true);
-            ch.setUint16(6, 20, true);
-            ch.setUint16(8, 0x0800, true);
-            ch.setUint16(10, 0, true);
-            ch.setUint16(12, time, true);
-            ch.setUint16(14, date, true);
-            ch.setUint32(16, crc, true);
-            ch.setUint32(20, size, true);
-            ch.setUint32(24, size, true);
-            ch.setUint16(28, name.length, true);
-            ch.setUint32(42, offset, true);
-            central.push(ch.buffer, name);
-
-            offset += 30 + name.length + size;
+    // Minimal binary Property List writer for the Foundation value types used
+    // by PatchPackageCodec: strings, dates, booleans, integers, data, arrays,
+    // and dictionaries.
+    function plist(value) {
+        const nodes = [];
+        function add(v) {
+            if (v && v.__plistDate instanceof Date) {
+                const id = nodes.length; nodes.push({ type: "date", value: v.__plistDate }); return id;
+            }
+            if (v instanceof Uint8Array) { const id=nodes.length; nodes.push({type:"data",value:v}); return id; }
+            if (typeof v === "string") { const id=nodes.length; nodes.push({type:"string",value:v}); return id; }
+            if (typeof v === "boolean") { const id=nodes.length; nodes.push({type:"bool",value:v}); return id; }
+            if (typeof v === "number" && Number.isSafeInteger(v) && v >= 0) { const id=nodes.length; nodes.push({type:"int",value:v}); return id; }
+            if (Array.isArray(v)) { const id=nodes.length; nodes.push({type:"array",refs:[]}); nodes[id].refs=v.map(add); return id; }
+            if (v && typeof v === "object") {
+                const id=nodes.length; nodes.push({type:"dict",keys:[],values:[]});
+                for (const [k,x] of Object.entries(v)) { nodes[id].keys.push(add(k)); nodes[id].values.push(add(x)); }
+                return id;
+            }
+            throw new Error("Unsupported Property List value.");
         }
-
-        const cdSize = central.reduce((s, p) => s + p.byteLength, 0);
-        const end = new DataView(new ArrayBuffer(22));
-        end.setUint32(0, 0x06054b50, true);
-        end.setUint16(8, entries.length, true);
-        end.setUint16(10, entries.length, true);
-        end.setUint32(12, cdSize, true);
-        end.setUint32(16, offset, true);
-
-        return new Blob([...parts, ...central, end.buffer], { type: "application/zip" });
+        const top = add(value);
+        const refSize = n => n <= 0x100 ? 1 : n <= 0x10000 ? 2 : n <= 0x100000000 ? 4 : 8;
+        const writeUInt = (n, size) => { const b=new Uint8Array(size); for(let i=size-1;i>=0;i--){b[i]=n%256;n=Math.floor(n/256);} return b; };
+        const markerLength = (marker, length) => {
+            if (length < 15) return Uint8Array.of(marker | length);
+            let size = length <= 0xff ? 1 : length <= 0xffff ? 2 : length <= 0xffffffff ? 4 : 8;
+            const power = Math.log2(size);
+            return concat(Uint8Array.of(marker | 15, 0x10 | power), writeUInt(length, size));
+        };
+        const encoded = nodes.map(node => {
+            switch(node.type) {
+            case "bool": return Uint8Array.of(node.value ? 0x09 : 0x08);
+            case "int": { let size=node.value<=0xff?1:node.value<=0xffff?2:node.value<=0xffffffff?4:8; return concat(Uint8Array.of(0x10|Math.log2(size)),writeUInt(node.value,size)); }
+            case "date": { const b=new ArrayBuffer(8); new DataView(b).setFloat64(0,(node.value.getTime()-Date.UTC(2001,0,1))/1000,false); return concat(Uint8Array.of(0x33),new Uint8Array(b)); }
+            case "data": return concat(markerLength(0x40,node.value.length),node.value);
+            case "string": {
+                if (/^[\x00-\x7f]*$/.test(node.value)) { const b=utf8.encode(node.value); return concat(markerLength(0x50,b.length),b); }
+                const u16=new Uint8Array(node.value.length*2); for(let i=0;i<node.value.length;i++){const c=node.value.charCodeAt(i);u16[i*2]=c>>8;u16[i*2+1]=c&255;}
+                return concat(markerLength(0x60,node.value.length),u16);
+            }
+            case "array": return concat(markerLength(0xa0,node.refs.length),...node.refs.map(i=>writeUInt(i,refSize(nodes.length))));
+            case "dict": return concat(markerLength(0xd0,node.keys.length),...node.keys.map(i=>writeUInt(i,refSize(nodes.length))),...node.values.map(i=>writeUInt(i,refSize(nodes.length))));
+            default: throw new Error("Unsupported Property List node.");
+            }
+        });
+        const objectRefSize=refSize(nodes.length), offsets=[]; let cursor=8;
+        for(const b of encoded){offsets.push(cursor);cursor+=b.length;}
+        const offsetTableOffset=cursor, offsetSize=refSize(offsetTableOffset);
+        const trailer=concat(new Uint8Array(6),Uint8Array.of(offsetSize,objectRefSize),writeUInt(nodes.length,8),writeUInt(top,8),writeUInt(offsetTableOffset,8));
+        return concat(utf8.encode("bplist00"),...encoded,...offsets.map(n=>writeUInt(n,offsetSize)),trailer);
     }
 
-    return {
-        id: "workspace-zip",
-        description: "ZIP workspace folder (not a .3105 package)",
-        verified: false,
-        export: ({ entries, onProgress }) => zip(entries, onProgress)
-    };
+    async function digest(data) { return new Uint8Array(await crypto.subtle.digest("SHA-256",data)); }
+    async function encode(project) {
+        if (!crypto.subtle) throw new Error("Secure file creation requires HTTPS or localhost.");
+        const key=crypto.getRandomValues(new Uint8Array(32));
+        const replacementDigests={};
+        for (const rule of project.rules) replacementDigests[rule.id]=await digest(rule.replacementData);
+        const payload=plist({project,replacementDigests});
+        const nonce=crypto.getRandomValues(new Uint8Array(12));
+        const aesKey=await crypto.subtle.importKey("raw",key,{name:"AES-GCM"},false,["encrypt"]);
+        const aad=utf8.encode(`3105PATCH/v3/payload/${project.id}`);
+        const cipher=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:nonce,additionalData:aad,tagLength:128},aesKey,payload));
+        const fingerprint=await digest(key);
+        const envelope=plist({
+            schemaVersion:3,
+            packageID:project.id,
+            isPasswordProtected:false,
+            publicContentKey:key,
+            keyFingerprint:fingerprint,
+            encryptedPayload:concat(nonce,cipher)
+        });
+        return new Blob([MAGIC,envelope],{type:"application/octet-stream"});
+    }
+    return { id:"3105-official-codec-v3", description:"3105 public patch package (schema v3)", verified:false, export:({project})=>encode(project) };
 })();

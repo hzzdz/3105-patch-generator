@@ -1,70 +1,26 @@
-# 3105 Patch Workspace Builder
+# 3105 Patch Generator
 
-Ứng dụng web tĩnh (HTML/CSS/JS thuần) tạo **ZIP workspace** từ một file: chọn Bundle và Link đã cấu hình, đặt tên patch, chọn file rồi tải `<TênPatch>.zip`. Giao diện hiện tại được giữ nguyên; file được xử lý hoàn toàn trong trình duyệt.
+Ứng dụng web tĩnh tạo **file `.3105`** từ một payload: chọn Bundle và Link đã cấu hình, nhập tên patch, chọn file rồi tải patch về. File được đọc và mã hóa trong trình duyệt; máy chủ không nhận payload.
 
-> ZIP này là workspace có cấu trúc theo tài liệu 3105, **không phải gói `.3105`**. Công cụ không tạo, giải mã hay giả lập định dạng gói độc quyền.
+Exporter dùng schema v3 và luồng mã hóa theo mã nguồn công khai của [3105](https://github.com/YangJiiii/3105), gồm Property List nhị phân, AES-GCM, SHA-256 và header `3105PATCH`. File tạo ra là package, không phải ZIP workspace. Extension `.3105` một mình không đủ; nội dung cũng được mã hóa đúng định dạng.
 
-Tài liệu tham khảo: [Hướng dẫn Patch workspace chính thức](https://github.com/YangJiiii/3105/blob/main/docs/PATCH_GUIDE.vi.md).
+> **Khả năng tương thích:** web tạo package theo codec schema v3 công khai. Chưa xác nhận trực tiếp trên mọi phiên bản 3105; hãy thử nhập file vào app của bạn.
 
-## Chạy
+## Chạy thử
 
-Cần Node.js; không cần cài package. Chạy `node serve.js`, sau đó mở `http://localhost:5173`. Có thể đổi cổng qua biến `PORT`, hoặc host thư mục như website tĩnh.
+Cần Node.js, không cần cài package. Chạy `node serve.js`, rồi mở `http://localhost:5173`. Trang hosted cần HTTPS để trình duyệt cho phép Web Crypto.
 
 ## Cấu hình
 
-`config.js` đã có giá trị ví dụ hợp lệ để bạn thử ngay. Các identifier `com.example.*` và `group.com.example.shared` chỉ là dữ liệu mẫu, không trỏ đến một app thật. Trước khi dùng với thiết bị, thay chúng bằng identifier và đường dẫn của ứng dụng/dữ liệu bạn có quyền quản lý.
+Sửa `config.js` để đặt Bundle IDs và Link đích. Các giá trị mặc định có ví dụ; thay bằng Bundle ID và đường dẫn thật.
 
-```js
-const bundles = {
-    A: "com.example.app",
-    B: "com.example.second",
-    C: "group.com.example.shared"
-};
+- Link kết thúc bằng `/`: xem Link là thư mục; giữ tên file tải lên.
+- Link không có `/` cuối: xem Link là đường dẫn file đích; dùng tên cuối của Link làm tên file trong patch.
+- Bundle ID `group.*` là App Group. Những Bundle ID khác là app thông thường.
+- `maxFileSizeMB` giới hạn dung lượng tải lên; `acceptedExtensions` để trống thì nhận mọi đuôi file.
 
-const links = {
-    A: "Library/Preferences",
-    B: "Documents",
-    C: "Library/Application Support"
-};
+Generator tạo một rule thay thế cho Bundle/Link đã chọn. Package hiện là public (không mật khẩu). Bundle ID và Link phải tương thích với ứng dụng đích.
 
-const settings = {
-    maxFileSizeMB: 500,
-    acceptedExtensions: []
-};
-```
+## Bản quyền
 
-Bundle ID bắt đầu `group.` được đặt dưới `AppGroup/`; các ID khác nằm dưới `Application/`. Link không có dấu `/` cuối là **đường dẫn file đích hoàn chỉnh**; tên file trong workspace sẽ là phần cuối của Link. Thêm dấu `/` cuối để coi Link là **thư mục đích** và giữ nguyên tên file tải lên. Ví dụ, `gameassetbundles/avatar.bin` đặt file trực tiếp tại đường dẫn đó; `gameassetbundles/` đặt file tải lên bên trong thư mục đó. Các mục chưa cấu hình/sai sẽ bị khóa và cảnh báo trong giao diện. `acceptedExtensions: []` cho phép mọi đuôi file.
-
-## Nội dung ZIP
-
-ZIP có đúng một thư mục gốc `<TênPatch>/`, không lồng thêm thư mục thừa:
-
-```text
-MyPatch/
-├── settings.json
-├── Application/
-│   └── com.example.app/Library/Preferences/settings.plist
-└── AppGroup/
-```
-
-`settings.json` là cấu hình hợp lệ tối thiểu theo tài liệu (`schemaVersion: 1`, `fields: []`). Hai thư mục `Application/` và `AppGroup/` luôn được tạo, kể cả khi một thư mục chưa có payload. File tải lên được chép nguyên byte vào đúng đường dẫn và giữ nguyên tên. ZIP dùng định dạng chuẩn, không nén (store), tên đường dẫn UTF-8.
-
-Tên đầu ra luôn `<TênPatch>.zip`. Không đổi extension sang `.3105`: extension không thể tạo ra gói 3105 thực.
-
-## Giới hạn
-
-- Tài liệu công khai mô tả workspace và việc 3105 đồng bộ workspace vào gói khi xuất trong ứng dụng. Tài liệu không xác nhận có thể nhập ZIP workspace trực tiếp. Hãy giải nén ZIP; để dùng trong 3105, chép thư mục patch vào `On My iPhone/3105/Patches/`, đồng bộ workspace trong ứng dụng, rồi dùng chức năng Export chính thức. Luồng này cần được xác nhận trên thiết bị/app đang dùng.
-- Website không thể kiểm tra Bundle ID hoặc Link có tồn tại trên thiết bị đích hay không.
-- Quy tắc tên patch, giới hạn độ sâu/số file và nhiều ràng buộc nội bộ của ứng dụng không được tài liệu định nghĩa đầy đủ; website áp dụng kiểm tra an toàn cơ bản riêng.
-- Không tải file lên máy chủ. ZIP chứa file payload bạn đã chọn.
-
-## Tệp trong project
-
-| Tệp | Vai trò |
-|---|---|
-| `index.html`, `style.css` | Giao diện hiện có |
-| `app.js` | Chọn mục, kiểm tra, upload, trạng thái và tải xuống |
-| `processor.js` | Kiểm tra config, xây workspace và tên ZIP |
-| `exporter.js` | Tạo ZIP chuẩn trong trình duyệt |
-| `config.js` | Bundle, Link và giới hạn file cần bạn cấu hình |
-| `serve.js` | Server tĩnh để chạy thử |
+`exporter.js` chuyển thể luồng `PatchPackageCodec` từ dự án 3105 công khai. Dự án này được phát hành theo GNU GPL v3.0; xem [LICENSE](LICENSE) và [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Các thay đổi được đánh dấu tại các tệp tương ứng.
