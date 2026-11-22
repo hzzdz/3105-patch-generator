@@ -22,8 +22,7 @@
 
 const bundles = {
     A: "com.hzz.game",
-    B: "com.example.second",
-    C: "group.com.example.shared"
+    B: "com.example.second"
 };
 
 const links = {
