@@ -235,6 +235,7 @@ button { font: inherit; color: inherit; }
 
 /* ---------- Selectable cards ---------- */
 .choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+#bundleOptions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .choice {
     position: relative; overflow: hidden;
     display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
@@ -750,6 +751,7 @@ button { font: inherit; color: inherit; }
 @media (max-width: 350px) {
     /* very narrow phones: full-width rows instead of tiny tiles */
     .choices { grid-template-columns: 1fr; }
+    #bundleOptions { grid-template-columns: 1fr; }
     .choice { flex-direction: row; text-align: left; padding: 12px 14px; }
     .choice-tick { top: 50%; right: 14px; margin-top: -9px; }
 }
