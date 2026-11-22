@@ -21,8 +21,8 @@
  * ========================================================= */
 
 const bundles = {
-    A: "com.garena.ffvn",
-    B: "com.dts.freefireth"
+    A: "com.hzz.test",
+    B: "com.hzz.game"
 };
 
 const links = {
