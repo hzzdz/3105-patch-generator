@@ -37,6 +37,9 @@
         link: ["assets/link-a.jpg", "assets/link-b.jpg", "assets/link-c.jpg"]
     };
     const CHOICE_SUB = { bundle: "Bundle package", link: "Destination link" };
+    // Display names for Link keys (shown in step 2, summary and result).
+    const LINK_NAMES = { A: "Alok", B: "Dimitri", C: "Ignis" };
+    const linkName = key => LINK_NAMES[key] || "Link " + key;
     const isImage = v => /\.(jpe?g|png|webp)$/i.test(v);
     const iconMarkup = v => isImage(v) ? `<img src="${v}" alt="" draggable="false">`
         : v.startsWith("i-") ? svgUse(v) : `<svg viewBox="0 0 24 24" aria-hidden="true">${v}</svg>`;
@@ -47,7 +50,7 @@
         container.innerHTML = "";
         let firstEnabled = true;
         Object.keys(map).forEach((key, i) => {
-            const label = (type === "bundle" ? "Bundle " : "Link ") + key;
+            const label = type === "bundle" ? "Bundle " + key : linkName(key);
             const problem = validate(map[key]);
             if (problem) configIssues.push({ label, problem });
             const btn = document.createElement("button");
@@ -263,7 +266,7 @@
     /* ---------- State → UI ---------- */
     const SUM = {
         bundle: { get: () => state.bundle && "Bundle " + state.bundle, empty: "Not selected" },
-        link:   { get: () => state.link && "Link " + state.link,       empty: "Not selected" },
+        link:   { get: () => state.link && linkName(state.link),       empty: "Not selected" },
         name:   { get: () => nameValid() && cleanName(),               empty: "Not set" },
         file:   { get: () => state.file && state.file.name,            empty: "No file" }
     };
@@ -405,7 +408,7 @@
             set(els.resFile, state.file.name);
             set(els.resSize, formatSize(blob.size));
             set(els.resBundle, "Bundle " + state.bundle);
-            set(els.resLink, "Link " + state.link);
+            set(els.resLink, linkName(state.link));
             state.generated = true;
             els.result.hidden = false;
             toast(verified ? "3105 patch created" : ".3105 patch created — test import in your app", "success");
