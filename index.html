@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#05060a">
+    <title>3105 Patch Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Shared SVG symbols (reused across the page) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#22d3ee"/>
+            </linearGradient>
+        </defs>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+        <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8l9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol>
+        <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+        <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+        <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></symbol>
+        <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.01"/></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.9-3.5L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14.9 3.5L20 15"/><path d="M20 20v-5h-5"/></symbol>
+    </svg>
+
+    <!-- Background -->
+    <div class="bg" aria-hidden="true">
+        <div class="bg-grid"></div>
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+        <div class="glow glow-3"></div>
+        <canvas id="particles"></canvas>
+    </div>
+
+    <!-- Header -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="#" aria-label="3105 Patch Generator home">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 40 40" aria-hidden="true">
+                        <path d="M20 3 35 11.5v17L20 37 5 28.5v-17z" fill="none" stroke="url(#brandGrad)" stroke-width="2.2" stroke-linejoin="round"/>
+                        <path d="M20 12.5 27 16.5v7L20 27.5l-7-4v-7z" fill="url(#brandGrad)"/>
+                        <path d="M20 3v9.5M35 28.5l-8-5M5 28.5l8-5" stroke="url(#brandGrad)" stroke-width="1.6" opacity=".5"/>
+                    </svg>
+                </span>
+                <span class="brand-text">
+                    <span class="brand-name">3105 <b>PATCH GENERATOR</b></span>
+                    <span class="brand-sub">Create patches effortlessly</span>
+                </span>
+            </a>
+            <div class="topbar-right">
+                <span class="status" role="status"><span class="pulse"></span><span class="status-text">SYSTEM ONLINE</span></span>
+                <span class="version">v2.1.0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="shell">
+        <!-- Hero -->
+        <section class="hero">
+            <span class="eyebrow"><span class="eyebrow-dot"></span>PATCH STUDIO</span>
+            <h1>Create <span class="grad">Your Patch</span></h1>
+            <p>Generate custom patches in seconds.</p>
+        </section>
+
+        <div class="layout">
+            <!-- Generator -->
+            <form id="patchForm" class="card gb generator" novalidate>
+                <div class="gen-head">
+                    <div>
+                        <h2>Patch Configuration</h2>
+                        <p id="progressCaption">0 of 4 steps complete</p>
+                    </div>
+                    <div class="ring" id="ring" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" aria-label="Steps completed">
+                        <svg viewBox="0 0 44 44"><circle class="ring-track" cx="22" cy="22" r="18"/><circle class="ring-fill" id="ringFill" cx="22" cy="22" r="18"/></svg>
+                        <span id="ringText">0/4</span>
+                    </div>
+                </div>
+
+                <div id="configAlert" class="alert alert-warn" role="status" hidden><svg><use href="#i-info"/></svg><span id="configAlertText"></span></div>
+
+                <section class="step" data-step="1">
+                    <header class="step-head">
+                        <span class="step-num">01</span>
+                        <div class="step-title"><h3>Select Bundle</h3><p>Choose the target bundle.</p></div>
+                        <svg class="step-check"><use href="#i-check"/></svg>
+                    </header>
+                    <div class="choices" id="bundleOptions" role="radiogroup" aria-label="Bundle"></div>
+                </section>
+
+                <section class="step" data-step="2">
+                    <header class="step-head">
+                        <span class="step-num">02</span>
+                        <div class="step-title"><h3>Select Link</h3><p>Choose the destination link.</p></div>
+                        <svg class="step-check"><use href="#i-check"/></svg>
+                    </header>
+                    <div class="choices" id="linkOptions" role="radiogroup" aria-label="Link"></div>
+                </section>
+
+                <section class="step" data-step="3">
+                    <header class="step-head">
+                        <span class="step-num">03</span>
+                        <div class="step-title"><h3>Patch Information</h3><p>Give your patch a name.</p></div>
+                        <svg class="step-check"><use href="#i-check"/></svg>
+                    </header>
+                    <label class="field gb" for="patchName">
+                        <svg class="field-icon"><use href="#i-tag"/></svg>
+                        <input type="text" id="patchName" placeholder="Enter patch name" maxlength="64" autocomplete="off" spellcheck="false" aria-describedby="nameHint">
+                        <span class="field-count" id="nameCount">0/64</span>
+                    </label>
+                    <p class="hint" id="nameHint"><svg><use href="#i-info"/></svg><span>Letters, numbers, dot, dash and underscore.</span></p>
+                </section>
+
+                <section class="step" data-step="4">
+                    <header class="step-head">
+                        <span class="step-num">04</span>
+                        <div class="step-title"><h3>Upload File</h3><p>Add the source file for this patch.</p></div>
+                        <svg class="step-check"><use href="#i-check"/></svg>
+                    </header>
+                    <label id="dropzone" class="dropzone" tabindex="0">
+                        <input type="file" id="fileInput" hidden>
+                        <span class="dz-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9a4 4 0 0 1 0 9"/><path class="dz-arrow" d="M12 12v8M8.5 15.5 12 12l3.5 3.5"/></svg>
+                        </span>
+                        <span class="dz-title" id="dzTitle">Drag &amp; drop your file here</span>
+                        <span class="dz-sub">or <u>browse files</u></span>
+                        <span class="dz-limit" id="dzLimit"></span>
+                    </label>
+
+                    <div id="fileCard" class="file-card gb" hidden>
+                        <span class="file-icon" id="fileIcon"><svg id="fileIconSvg" viewBox="0 0 24 24" aria-hidden="true"></svg></span>
+                        <div class="file-meta">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-sub">
+                                <span id="fileExt" class="file-ext"></span>
+                                <span id="fileSize"></span>
+                                <span class="file-status" id="fileStatus"></span>
+                            </div>
+                        </div>
+                        <button type="button" id="removeFile" class="icon-btn danger" aria-label="Remove file"><svg><use href="#i-trash"/></svg></button>
+                        <span class="file-progress"><span id="fileProgress"></span></span>
+                    </div>
+                </section>
+
+                <div id="error" class="alert" role="alert" hidden><svg><use href="#i-alert"/></svg><span id="errorText"></span></div>
+
+                <button type="submit" id="generateBtn" class="btn btn-primary btn-xl" disabled>
+                    <span class="spinner" aria-hidden="true"></span>
+                    <svg class="btn-icon"><use href="#i-bolt"/></svg>
+                <span id="generateLabel">BUILD WORKSPACE ZIP</span>
+                </button>
+
+                <div id="progressWrap" class="progress-wrap" hidden>
+                    <div class="bar"><span id="progressBar"></span></div>
+                    <div class="progress-text"><span id="progressLabel">Processing…</span><span id="progressPct">0%</span></div>
+                </div>
+            </form>
+
+            <!-- Side -->
+            <aside class="side">
+                <div class="card summary">
+                    <div class="sum-head">
+                        <h2 class="eyebrow-title">Patch Summary</h2>
+                        <span class="sum-pct" id="sumPct">0%</span>
+                    </div>
+                    <div class="bar bar-thin"><span id="sumBar"></span></div>
+                    <ul class="sum-list">
+                        <li class="sum-item" data-key="bundle">
+                            <span class="tile-icon"><svg><use href="#i-box"/></svg></span>
+                            <span class="sum-text"><span class="sum-label">Bundle</span><span class="sum-val">Not selected</span></span>
+                            <svg class="sum-state"><use href="#i-check"/></svg>
+                        </li>
+                        <li class="sum-item" data-key="link">
+                            <span class="tile-icon"><svg><use href="#i-link"/></svg></span>
+                            <span class="sum-text"><span class="sum-label">Link</span><span class="sum-val">Not selected</span></span>
+                            <svg class="sum-state"><use href="#i-check"/></svg>
+                        </li>
+                        <li class="sum-item" data-key="name">
+                            <span class="tile-icon"><svg><use href="#i-tag"/></svg></span>
+                            <span class="sum-text"><span class="sum-label">Patch name</span><span class="sum-val">Not set</span></span>
+                            <svg class="sum-state"><use href="#i-check"/></svg>
+                        </li>
+                        <li class="sum-item" data-key="file">
+                            <span class="tile-icon"><svg><use href="#i-file"/></svg></span>
+                            <span class="sum-text"><span class="sum-label">File</span><span class="sum-val">No file</span></span>
+                            <svg class="sum-state"><use href="#i-check"/></svg>
+                        </li>
+                    </ul>
+                    <div class="sum-status" id="sumStatus"><span class="sum-dot"></span><span id="sumStatusText">Waiting for input</span></div>
+                </div>
+
+                <div id="result" class="card gb result" hidden tabindex="-1" aria-labelledby="resultTitle">
+                    <div class="result-hero">
+                        <div class="success-icon" aria-hidden="true">
+                            <span class="burst"><i style="--a:0deg"></i><i style="--a:45deg"></i><i style="--a:90deg"></i><i style="--a:135deg"></i><i style="--a:180deg"></i><i style="--a:225deg"></i><i style="--a:270deg"></i><i style="--a:315deg"></i></span>
+                            <svg viewBox="0 0 52 52"><circle class="s-circle" cx="26" cy="26" r="23"/><path class="s-check" d="m15 27 7.5 7.5L37 19.5"/></svg>
+                        </div>
+                        <h2 class="result-title" id="resultTitle">PATCH GENERATED SUCCESSFULLY</h2>
+                    <p class="result-sub">Your workspace ZIP is ready to download.</p>
+                    </div>
+
+                    <div class="result-body">
+                        <div class="ticket">
+                            <span class="ticket-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8"/><path d="M1.5 4h21v4h-21z"/><path d="M10 12h4"/></svg></span>
+                            <span class="ticket-meta">
+                                <span class="ticket-label">Patch name</span>
+                                <span class="ticket-name" id="resName"></span>
+                                <span class="ticket-sub"><span id="resOut"></span><span class="dot"></span><span id="resSize"></span></span>
+                            </span>
+                            <span class="ticket-badge" id="resBadge">READY</span>
+                        </div>
+                        <dl class="result-grid">
+                            <div><dt>Bundle</dt><dd id="resBundle"></dd></div>
+                            <div><dt>Link</dt><dd id="resLink"></dd></div>
+                            <div class="span-2"><dt>Source file</dt><dd id="resFile"></dd></div>
+                        </dl>
+                        <p class="result-note" id="resNote"><svg><use href="#i-info"/></svg><span id="resNoteText"></span></p>
+                    </div>
+
+                    <div class="result-actions">
+                        <a id="downloadBtn" class="btn btn-success btn-lg" download>
+                            <span class="dl-swap" aria-hidden="true">
+                                <svg class="btn-icon dl-icon"><use href="#i-download"/></svg>
+                                <svg class="btn-icon dl-done"><use href="#i-check"/></svg>
+                            </span>
+                            <span id="downloadLabel">DOWNLOAD WORKSPACE ZIP</span>
+                        </a>
+                        <button type="button" id="resetBtn" class="btn btn-ghost">
+                            <svg class="btn-icon"><use href="#i-refresh"/></svg>
+                            CREATE ANOTHER PATCH
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <footer class="foot">
+            <span>© 3105 Patch Generator</span>
+            <span class="foot-sep"></span>
+            <span>Files are processed locally in your browser</span>
+        </footer>
+    </main>
+
+    <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+    <script src="config.js"></script>
+    <script src="exporter.js"></script>
+    <script src="processor.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
