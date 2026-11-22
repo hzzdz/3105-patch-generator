@@ -18,13 +18,13 @@
  * ========================================================= */
 
 const bundles = {
-    A: "com.example.app",
+    A: "com.hzz.game",
     B: "com.example.second",
     C: "group.com.example.shared"
 };
 
 const links = {
-    A: "Library/Preferences",
+    A: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_66.1GZrX1l5Sm~2FgqXYqB7dDyULWdn4~3D",
     B: "Documents",
     C: "Library/Application Support"
 };
