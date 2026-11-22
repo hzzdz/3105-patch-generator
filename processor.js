@@ -4,10 +4,10 @@
  * 1. PatchSpec: kiểm tra Bundle ID / relative path và tính đường dẫn
  *    của file upload trong workspace, theo tài liệu công khai:
  *      https://github.com/YangJiiii/3105/blob/main/docs/PATCH_GUIDE.md
- *      <PatchName>/Application/<bundle-id>/<link>/<tên file upload>
- *      <PatchName>/AppGroup/group.<name>/<link>/<tên file upload>
- *    If Link already ends with the uploaded filename, it is treated as the
- *    complete target file path. This avoids creating a same-named folder.
+ *      <PatchName>/Application/<bundle-id>/<Link>
+ *      <PatchName>/AppGroup/group.<name>/<Link>
+ *    Link without a trailing slash is the complete target file path. A Link
+ *    ending in "/" is a target folder; the uploaded filename is appended.
  * 2. buildPatch: đọc file, giao cho exporter (exporter.js) đóng gói,
  *    đặt tên file tải về = <tên patch> + settings.outputExtension.
  *
@@ -22,9 +22,8 @@ const PatchSpec = (() => {
     // --- Quy tắc riêng của website (tài liệu KHÔNG định nghĩa) ---
     // • Dạng bundle ID: các đoạn chữ/số/gạch ngang nối bằng dấu chấm (theo quy ước reverse-DNS của Apple).
     // • Tên patch: chữ, số, ".", "-", "_".
-    // • Link thường là THƯ MỤC đích. Nếu phần cuối trùng tên file upload,
-    //   Link được hiểu là đường dẫn tệp đích hoàn chỉnh. Dùng "/" cuối để
-    //   ép coi đường dẫn là thư mục trong trường hợp hai tên trùng nhau.
+    // • Link không có "/" cuối là đường dẫn tệp đích hoàn chỉnh.
+    //   Thêm "/" cuối để coi Link là thư mục và giữ tên file upload.
     const NAME_RE = /^[A-Za-z0-9._-]+$/;
     const ID_RE = /^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/;
     const PLACEHOLDER_RE = /^(BUNDLE|LINK)_[A-Z0-9]+$/;
@@ -77,10 +76,7 @@ const PatchSpec = (() => {
         if (e3) return { error: `Uploaded ${e3}.` };
         const isDirectory = relPath.endsWith("/");
         const target = relPath.replace(/\/$/, "");
-        const leaf = target.slice(target.lastIndexOf("/") + 1);
-        const destination = !isDirectory && leaf === fileName
-            ? target
-            : `${target}/${fileName}`;
+        const destination = isDirectory ? `${target}/${fileName}` : target;
         return { entryPath: `${patchName}/${scopeFor(bundleId)}/${bundleId}/${destination}` };
     }
 

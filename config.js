@@ -4,10 +4,13 @@
  * bundles: Bundle ID của app (hoặc App Group, bắt đầu bằng "group.").
  *          Ví dụ: "com.example.app"  hoặc  "group.com.example.shared"
  *
- * links:   THƯ MỤC đích, relative path TÍNH TỪ GỐC CONTAINER của app.
- *          File upload được đặt vào thư mục này và GIỮ NGUYÊN TÊN.
- *              Ví dụ: "Library/Preferences"  →  …/Library/Preferences/<tên file upload>
- *          Dấu "/" ở cuối có hay không đều được.
+ * links:   Đường dẫn tương đối TÍNH TỪ GỐC CONTAINER của app.
+ *          Không có "/" cuối: đây là ĐƯỜNG DẪN FILE đích; file upload được
+ *          đặt tại đó (có thể đổi tên theo phần cuối của Link).
+ *          Có "/" cuối: đây là THƯ MỤC đích; file upload được đặt vào đó
+ *          và GIỮ NGUYÊN TÊN.
+ *              Ví dụ: "Library/Preferences/" → …/Library/Preferences/<tên file upload>
+ *              Ví dụ: "Library/Preferences/app.plist" → …/Library/Preferences/app.plist
  *          Không dùng đường dẫn tuyệt đối, "..", hay UUID của container.
  *
  * File tải về luôn là ZIP workspace (<tên patch>.zip), không phải gói .3105.
@@ -25,8 +28,8 @@ const bundles = {
 
 const links = {
     A: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_66.1GZrX1l5Sm~2FgqXYqB7dDyULWdn4~3D",
-    B: "Documents",
-    C: "Library/Application Support"
+    B: "Documents/",
+    C: "Library/Application Support/"
 };
 
 // Tuỳ chọn khác
