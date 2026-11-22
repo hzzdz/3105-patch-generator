@@ -40,6 +40,9 @@
     // Display names for Link keys (shown in step 2, summary and result).
     const LINK_NAMES = { A: "Alok", B: "Dimitri", C: "Ignis" };
     const linkName = key => LINK_NAMES[key] || "Link " + key;
+    // Display names for Bundle keys (shown in step 1, summary and result).
+    const BUNDLE_NAMES = { A: "Free Fire VN", B: "Free Fire TH" };
+    const bundleName = key => BUNDLE_NAMES[key] || "Bundle " + key;
     const isImage = v => /\.(jpe?g|png|webp)$/i.test(v);
     const iconMarkup = v => isImage(v) ? `<img src="${v}" alt="" draggable="false">`
         : v.startsWith("i-") ? svgUse(v) : `<svg viewBox="0 0 24 24" aria-hidden="true">${v}</svg>`;
@@ -50,7 +53,7 @@
         container.innerHTML = "";
         let firstEnabled = true;
         Object.keys(map).forEach((key, i) => {
-            const label = type === "bundle" ? "Bundle " + key : linkName(key);
+            const label = type === "bundle" ? bundleName(key) : linkName(key);
             const problem = validate(map[key]);
             if (problem) configIssues.push({ label, problem });
             const btn = document.createElement("button");
@@ -265,7 +268,7 @@
 
     /* ---------- State → UI ---------- */
     const SUM = {
-        bundle: { get: () => state.bundle && "Bundle " + state.bundle, empty: "Not selected" },
+        bundle: { get: () => state.bundle && bundleName(state.bundle), empty: "Not selected" },
         link:   { get: () => state.link && linkName(state.link),       empty: "Not selected" },
         name:   { get: () => nameValid() && cleanName(),               empty: "Not set" },
         file:   { get: () => state.file && state.file.name,            empty: "No file" }
@@ -407,7 +410,7 @@
             els.downloadLabel.textContent = "DOWNLOAD .3105 PATCH";
             set(els.resFile, state.file.name);
             set(els.resSize, formatSize(blob.size));
-            set(els.resBundle, "Bundle " + state.bundle);
+            set(els.resBundle, bundleName(state.bundle));
             set(els.resLink, linkName(state.link));
             state.generated = true;
             els.result.hidden = false;
