@@ -20,12 +20,12 @@
  * Giá trị còn để dạng BUNDLE_A / LINK_A được coi là "chưa cấu hình" và bị khoá trên giao diện.
  * ========================================================= */
 
-const Bundles = {
+const bundles = {
     A: "com.hzz.game",
     B: "com.hdz.game"
 };
 
-const Links = {
+const links = {
     A: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_66.1GZrX1l5Sm~2FgqXYqB7dDyULWdn4~3D",
     B: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_38.OGKQHD4lBsPTBXw2QMHH3pwjUpE~3D",
     C: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_68.mkIcgw~2FuXDgA~2Ftt4a~2FDHdRIIp7g~3D"
