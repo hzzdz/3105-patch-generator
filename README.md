@@ -33,7 +33,7 @@ const settings = {
 };
 ```
 
-Bundle ID bắt đầu `group.` được đặt dưới `AppGroup/`; các ID khác nằm dưới `Application/`. Link là đường dẫn tương đối đến **thư mục** đích. Tên file tải lên được giữ nguyên. Các mục chưa cấu hình/sai sẽ bị khóa và cảnh báo trong giao diện. `acceptedExtensions: []` cho phép mọi đuôi file.
+Bundle ID bắt đầu `group.` được đặt dưới `AppGroup/`; các ID khác nằm dưới `Application/`. Link thường là đường dẫn tương đối đến **thư mục** đích và tên file tải lên được giữ nguyên. Nếu phần cuối Link trùng chính xác với tên file đã tải lên, Link được hiểu là đường dẫn tệp đích hoàn chỉnh để tránh tạo thêm thư mục cùng tên. Thêm dấu `/` cuối Link để luôn buộc coi nó là thư mục. Các mục chưa cấu hình/sai sẽ bị khóa và cảnh báo trong giao diện. `acceptedExtensions: []` cho phép mọi đuôi file.
 
 ## Nội dung ZIP
 
