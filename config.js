@@ -20,12 +20,12 @@
  * Giá trị còn để dạng BUNDLE_A / LINK_A được coi là "chưa cấu hình" và bị khoá trên giao diện.
  * ========================================================= */
 
-const Free Fire = {
+const Bundle = {
     VN: "com.garena.ffvn",
     TH: "com.dts.freefireth"
 };
 
-const  = {
+const Link = {
     Alok: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_66.1GZrX1l5Sm~2FgqXYqB7dDyULWdn4~3D",
     Dimitri: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_38.OGKQHD4lBsPTBXw2QMHH3pwjUpE~3D",
     Ignis: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_68.mkIcgw~2FuXDgA~2Ftt4a~2FDHdRIIp7g~3D"
