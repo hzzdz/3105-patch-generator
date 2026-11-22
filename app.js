@@ -33,15 +33,13 @@
 
     /* ---------- Selectable cards (keys only — real values never reach the DOM) ---------- */
     const CHOICE_ICONS = {
-        bundle: ["i-box",
-            '<path d="m12 3 9 4.5-9 4.5-9-4.5z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/>',
-            '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'],
-        link: ["i-link",
-            '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>',
-            "i-bolt"]
+        bundle: ["assets/bundle.jpg", "assets/bundle.jpg", "assets/bundle.jpg"],
+        link: ["assets/link-a.jpg", "assets/link-b.jpg", "assets/link-c.jpg"]
     };
     const CHOICE_SUB = { bundle: "Bundle package", link: "Destination link" };
-    const iconMarkup = v => v.startsWith("i-") ? svgUse(v) : `<svg viewBox="0 0 24 24" aria-hidden="true">${v}</svg>`;
+    const isImage = v => /\.(jpe?g|png|webp)$/i.test(v);
+    const iconMarkup = v => isImage(v) ? `<img src="${v}" alt="" draggable="false">`
+        : v.startsWith("i-") ? svgUse(v) : `<svg viewBox="0 0 24 24" aria-hidden="true">${v}</svg>`;
 
     // Validate config.js once. Messages name the key only, never the value.
     const configIssues = [];
@@ -63,7 +61,7 @@
             if (!problem) firstEnabled = false;
             const sub = !problem ? CHOICE_SUB[type] : problem === "is not configured" ? "Not configured" : "Invalid in config";
             btn.innerHTML =
-                `<span class="choice-icon">${iconMarkup(CHOICE_ICONS[type][i % 3])}</span>` +
+                `<span class="choice-icon${isImage(CHOICE_ICONS[type][i % 3]) ? " choice-icon--img" : ""}">${iconMarkup(CHOICE_ICONS[type][i % 3])}</span>` +
                 `<span><span class="choice-name">${label}</span><span class="choice-sub">${sub}</span></span>` +
                 `<span class="choice-tick">${svgUse("i-check")}</span>`;
             btn.addEventListener("click", e => {
